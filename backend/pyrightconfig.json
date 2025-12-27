@@ -1,0 +1,21 @@
+{
+    // 后端目录的 Pyright 配置
+    "include": [
+        "app"
+    ],
+    "exclude": [
+        "**/__pycache__",
+        "**/venv",
+        "**/.venv"
+    ],
+    "pythonVersion": "3.9",
+    "typeCheckingMode": "basic",
+    "autoImportCompletions": true,
+    "reportMissingImports": true,
+    "reportMissingTypeStubs": false,
+    "reportUnusedImport": true,
+    "reportUnusedVariable": true,
+    "reportUnusedFunction": true,
+    "reportUnusedClass": true
+}
+

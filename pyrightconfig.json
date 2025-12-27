@@ -1,0 +1,54 @@
+{
+    // Pyright 配置文件 - 用于 Python 代码分析和跳转支持
+    "include": [
+        "backend"
+    ],
+    "exclude": [
+        "**/__pycache__",
+        "**/node_modules",
+        "**/venv",
+        "**/.venv",
+        "**/.*"
+    ],
+    // Python 版本
+    "pythonVersion": "3.9",
+    
+    // 类型检查模式：off, basic, strict
+    "typeCheckingMode": "basic",
+    
+    // 自动导入
+    "autoImportCompletions": true,
+    
+    // 报告缺失的导入
+    "reportMissingImports": true,
+    "reportMissingTypeStubs": false,
+    
+    // 报告未使用的导入
+    "reportUnusedImport": true,
+    "reportUnusedVariable": true,
+    
+    // 报告未使用的函数/类
+    "reportUnusedFunction": true,
+    "reportUnusedClass": true,
+    
+    // 额外路径（项目根目录）
+    "extraPaths": [
+        "backend"
+    ],
+    
+    // 执行环境
+    "executionEnvironments": [
+        {
+            "root": "backend",
+            "pythonVersion": "3.9",
+            "pythonPlatform": "Windows",
+            "extraPaths": []
+        }
+    ],
+    
+    // 严格模式选项（可选，根据需要开启）
+    "strictListInference": false,
+    "strictDictionaryInference": false,
+    "strictSetInference": false
+}
+

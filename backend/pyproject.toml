@@ -1,0 +1,43 @@
+[tool.pyright]
+# Pyright 配置（与 pyrightconfig.json 等效）
+include = ["app"]
+exclude = ["**/__pycache__", "**/venv", "**/.venv"]
+pythonVersion = "3.9"
+typeCheckingMode = "basic"
+autoImportCompletions = true
+reportMissingImports = true
+reportMissingTypeStubs = false
+reportUnusedImport = true
+reportUnusedVariable = true
+reportUnusedFunction = true
+reportUnusedClass = true
+
+[tool.black]
+# Black 代码格式化配置
+line-length = 100
+target-version = ['py39']
+include = '\.pyi?$'
+extend-exclude = '''
+/(
+  # directories
+  \.eggs
+  | \.git
+  | \.hg
+  | \.mypy_cache
+  | \.tox
+  | \.venv
+  | venv
+  | _build
+  | buck-out
+  | build
+  | dist
+  | __pycache__
+)/
+'''
+
+[tool.isort]
+# isort 导入排序配置
+profile = "black"
+line_length = 100
+skip_glob = ["*/venv/*", "*/__pycache__/*"]
+
