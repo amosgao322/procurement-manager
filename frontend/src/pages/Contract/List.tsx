@@ -93,7 +93,7 @@ const ContractList: React.FC = () => {
     {
       title: '操作',
       key: 'action',
-      render: (_, record) => (
+      render: () => (
         <Button
           type="link"
           icon={<EyeOutlined />}

@@ -67,7 +67,7 @@ const SupplierForm: React.FC = () => {
           name="code"
           rules={[{ required: true, message: '请输入供应商编码' }]}
         >
-          <Input placeholder="供应商编码" disabled={isEdit} />
+          <Input placeholder="供应商编码" disabled={!!isEdit} />
         </Form.Item>
 
         <Form.Item

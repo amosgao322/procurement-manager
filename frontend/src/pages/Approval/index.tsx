@@ -145,7 +145,7 @@ const Approval: React.FC = () => {
     generateForm.setFieldsValue({
       quotation_id: quotation.id,
       contract_code: `HT${quotation.code}`,
-      contract_title: quotation.title,
+      contract_title: quotation.title || quotation.code,
     });
     setGenerateContractModalVisible(true);
   };

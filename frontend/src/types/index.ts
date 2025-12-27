@@ -36,7 +36,9 @@ export interface Bom {
   code: string;
   name: string;
   product_name?: string;
+  description?: string;
   status?: string;
+  remark?: string;
   created_at?: string;
   updated_at?: string;
   items?: BomItem[];
@@ -50,6 +52,8 @@ export interface BomListResponse {
 }
 
 // 供应商相关类型
+export type SupplierRating = '优秀' | '良好' | '一般' | '较差' | '差';
+
 export interface Supplier {
   id?: number;
   name: string;
@@ -86,6 +90,11 @@ export interface Quotation {
   code: string;
   bom_id: number;
   supplier_id: number;
+  title?: string;
+  quotation_date?: string;
+  currency?: string;
+  payment_terms?: string;
+  delivery_terms?: string;
   status: 'draft' | 'submitted' | 'approved' | 'rejected';
   total_amount?: number;
   delivery_days?: number;

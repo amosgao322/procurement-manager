@@ -5,7 +5,6 @@ import type {
   User,
   Bom,
   BomListResponse,
-  BomItem,
   Supplier,
   Quotation,
   Contract,

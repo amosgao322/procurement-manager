@@ -47,7 +47,7 @@ export const clearAuth = (): void => {
 };
 
 // 检查是否有权限
-export const hasPermission = (permission: string): boolean => {
+export const hasPermission = (_permission: string): boolean => {
   const user = getUser();
   if (!user) return false;
   

@@ -1,4 +1,4 @@
-import axios, { AxiosInstance, AxiosRequestConfig, AxiosError } from 'axios';
+import axios, { AxiosInstance, AxiosError } from 'axios';
 import { message } from 'antd';
 import { getToken, removeToken } from './auth';
 

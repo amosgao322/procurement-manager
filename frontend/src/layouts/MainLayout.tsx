@@ -14,7 +14,7 @@ import {
   UserOutlined,
   CheckCircleOutlined,
 } from '@ant-design/icons';
-import { clearAuth, getUser } from '@/utils/auth';
+import { clearAuth } from '@/utils/auth';
 import { authApi } from '@/services/api';
 import type { User } from '@/types';
 

@@ -128,7 +128,7 @@ const BomForm: React.FC = () => {
       dataIndex: 'sequence',
       key: 'sequence',
       width: 80,
-      render: (text, record, index) => (
+      render: (text, _record, index) => (
         <Input
           value={text}
           onChange={(e) => updateItem(index, 'sequence', e.target.value)}
@@ -140,7 +140,7 @@ const BomForm: React.FC = () => {
       title: '设备名称',
       dataIndex: 'material_name',
       key: 'material_name',
-      render: (text, record, index) => (
+      render: (text, _record, index) => (
         <Input
           value={text}
           onChange={(e) => updateItem(index, 'material_name', e.target.value)}
@@ -152,7 +152,7 @@ const BomForm: React.FC = () => {
       title: '规格型号',
       dataIndex: 'specification',
       key: 'specification',
-      render: (text, record, index) => (
+      render: (text, _record, index) => (
         <Input
           value={text}
           onChange={(e) => updateItem(index, 'specification', e.target.value)}
@@ -165,7 +165,7 @@ const BomForm: React.FC = () => {
       dataIndex: 'unit',
       key: 'unit',
       width: 100,
-      render: (text, record, index) => (
+      render: (text, _record, index) => (
         <Input
           value={text}
           onChange={(e) => updateItem(index, 'unit', e.target.value)}
@@ -178,7 +178,7 @@ const BomForm: React.FC = () => {
       dataIndex: 'quantity',
       key: 'quantity',
       width: 120,
-      render: (text, record, index) => (
+      render: (text, _record, index) => (
         <InputNumber
           value={text}
           onChange={(value) => updateItem(index, 'quantity', value || 0)}
@@ -193,7 +193,7 @@ const BomForm: React.FC = () => {
       dataIndex: 'unit_price',
       key: 'unit_price',
       width: 120,
-      render: (text, record, index) => (
+      render: (text, _record, index) => (
         <InputNumber
           value={text}
           onChange={(value) => updateItem(index, 'unit_price', value || 0)}
@@ -214,7 +214,7 @@ const BomForm: React.FC = () => {
       title: '备注',
       dataIndex: 'remark',
       key: 'remark',
-      render: (text, record, index) => (
+      render: (text, _record, index) => (
         <Input
           value={text}
           onChange={(e) => updateItem(index, 'remark', e.target.value)}
@@ -226,7 +226,7 @@ const BomForm: React.FC = () => {
       title: '操作',
       key: 'action',
       width: 80,
-      render: (_, record, index) => (
+      render: (_, _record, index) => (
         <Button
           type="link"
           danger
@@ -252,7 +252,7 @@ const BomForm: React.FC = () => {
           name="code"
           rules={[{ required: true, message: '请输入BOM编码' }]}
         >
-          <Input placeholder="BOM编码" disabled={isEdit} />
+          <Input placeholder="BOM编码" disabled={!!isEdit} />
         </Form.Item>
 
         <Form.Item
@@ -292,7 +292,7 @@ const BomForm: React.FC = () => {
           <Table
             columns={itemColumns}
             dataSource={items.map((item, index) => ({ ...item, index }))}
-            rowKey={(record, index) => `item-${index}`}
+            rowKey={(_record, index) => `item-${index}`}
             pagination={false}
             size="small"
           />

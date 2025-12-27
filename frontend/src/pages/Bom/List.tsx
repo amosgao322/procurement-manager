@@ -160,7 +160,7 @@ const BomList: React.FC = () => {
       const a = document.createElement('a');
       a.href = url;
       // 从响应头获取文件名，如果没有则使用默认名称
-      const contentDisposition = blob.type; // 这里可能需要从响应头获取
+      // 这里可能需要从响应头获取文件名
       a.download = `BOM_${id}.xlsx`;
       document.body.appendChild(a);
       a.click();

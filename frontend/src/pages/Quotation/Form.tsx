@@ -115,6 +115,7 @@ const QuotationForm: React.FC = () => {
       unit: '',
       quantity: 0,
       unit_price: 0,
+      total_price: 0,
       remark: '',
     };
     setItems([...items, newItem]);
@@ -202,7 +203,7 @@ const QuotationForm: React.FC = () => {
       dataIndex: 'sequence',
       key: 'sequence',
       width: 80,
-      render: (text, record, index) => (
+      render: (text, _record, index) => (
         <Input
           value={text}
           onChange={(e) => updateItem(index, 'sequence', e.target.value)}
@@ -214,7 +215,7 @@ const QuotationForm: React.FC = () => {
       title: '物料名称',
       dataIndex: 'material_name',
       key: 'material_name',
-      render: (text, record, index) => (
+      render: (text, _record, index) => (
         <Input
           value={text}
           onChange={(e) => updateItem(index, 'material_name', e.target.value)}
@@ -226,7 +227,7 @@ const QuotationForm: React.FC = () => {
       title: '规格型号',
       dataIndex: 'specification',
       key: 'specification',
-      render: (text, record, index) => (
+      render: (text, _record, index) => (
         <Input
           value={text}
           onChange={(e) => updateItem(index, 'specification', e.target.value)}
@@ -239,7 +240,7 @@ const QuotationForm: React.FC = () => {
       dataIndex: 'unit',
       key: 'unit',
       width: 100,
-      render: (text, record, index) => (
+      render: (text, _record, index) => (
         <Input
           value={text}
           onChange={(e) => updateItem(index, 'unit', e.target.value)}
@@ -252,7 +253,7 @@ const QuotationForm: React.FC = () => {
       dataIndex: 'quantity',
       key: 'quantity',
       width: 120,
-      render: (text, record, index) => (
+      render: (text, _record, index) => (
         <InputNumber
           value={text}
           onChange={(value) => updateItem(index, 'quantity', value || 0)}
@@ -267,7 +268,7 @@ const QuotationForm: React.FC = () => {
       dataIndex: 'unit_price',
       key: 'unit_price',
       width: 120,
-      render: (text, record, index) => (
+      render: (text, _record, index) => (
         <InputNumber
           value={text}
           onChange={(value) => updateItem(index, 'unit_price', value || 0)}
@@ -288,7 +289,7 @@ const QuotationForm: React.FC = () => {
       title: '备注',
       dataIndex: 'remark',
       key: 'remark',
-      render: (text, record, index) => (
+      render: (text, _record, index) => (
         <Input
           value={text}
           onChange={(e) => updateItem(index, 'remark', e.target.value)}
@@ -300,7 +301,7 @@ const QuotationForm: React.FC = () => {
       title: '操作',
       key: 'action',
       width: 80,
-      render: (_, record, index) => (
+      render: (_, _record, index) => (
         <Button
           type="link"
           danger
@@ -326,7 +327,7 @@ const QuotationForm: React.FC = () => {
           name="code"
           rules={[{ required: true, message: '请输入报价单编码' }]}
         >
-          <Input placeholder="报价单编码" disabled={isEdit} />
+          <Input placeholder="报价单编码" disabled={!!isEdit} />
         </Form.Item>
 
         <Form.Item
@@ -343,7 +344,7 @@ const QuotationForm: React.FC = () => {
           rules={[{ required: true, message: '请选择供应商' }]}
         >
           <Select placeholder="选择供应商" showSearch filterOption={(input, option) =>
-            (option?.label ?? '').toLowerCase().includes(input.toLowerCase())
+            String(option?.label ?? '').toLowerCase().includes(input.toLowerCase())
           }>
             {suppliers.map(sup => (
               <Select.Option key={sup.id} value={sup.id} label={sup.name}>
@@ -361,7 +362,7 @@ const QuotationForm: React.FC = () => {
             placeholder="选择BOM（可选，选择后会自动填充明细）"
             showSearch
             filterOption={(input, option) =>
-              (option?.label ?? '').toLowerCase().includes(input.toLowerCase())
+              String(option?.label ?? '').toLowerCase().includes(input.toLowerCase())
             }
             onChange={handleBomChange}
           >
@@ -414,7 +415,7 @@ const QuotationForm: React.FC = () => {
           <Table
             columns={itemColumns}
             dataSource={items.map((item, index) => ({ ...item, index }))}
-            rowKey={(record, index) => `item-${index}`}
+            rowKey={(_record, index) => `item-${index}`}
             pagination={false}
             size="small"
           />
