@@ -1,0 +1,46 @@
+version: '3.8'
+
+services:
+  app:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    container_name: procurement-manager
+    ports:
+      - "80:80"
+    environment:
+      # 数据库配置
+      - MYSQL_HOST=${MYSQL_HOST:-localhost}
+      - MYSQL_PORT=${MYSQL_PORT:-3306}
+      - MYSQL_USER=${MYSQL_USER:-root}
+      - MYSQL_PASSWORD=${MYSQL_PASSWORD:-Gg1936279628}
+      - MYSQL_DATABASE=${MYSQL_DATABASE:-procurement_manager}
+      
+      # JWT 配置
+      - SECRET_KEY=${SECRET_KEY:-your-secret-key-change-in-production}
+      
+      # CORS 配置
+      - CORS_ORIGINS=${CORS_ORIGINS:-["https://gaohuaiyu.vip","http://gaohuaiyu.vip"]}
+      
+      # 其他配置
+      - UPLOAD_DIR=uploads
+      - MAX_UPLOAD_SIZE=10485760
+      
+      # 是否初始化数据库（首次部署时设置为 true）
+      - INIT_DB=${INIT_DB:-false}
+    
+    volumes:
+      # 挂载上传目录（持久化存储）
+      - ./backend/uploads:/app/uploads
+      # 挂载日志目录（可选）
+      - ./logs:/app/logs
+    
+    restart: unless-stopped
+    
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost/health"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 40s
+

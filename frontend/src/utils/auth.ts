@@ -4,8 +4,9 @@ const USER_KEY = 'procurement_user';
 export interface StoredUser {
   id: number;
   username: string;
-  real_name: string;
+  real_name?: string;
   roles: string[];
+  permissions?: string[];  // 权限代码列表
 }
 
 // Token管理
@@ -47,7 +48,7 @@ export const clearAuth = (): void => {
 };
 
 // 检查是否有权限
-export const hasPermission = (_permission: string): boolean => {
+export const hasPermission = (permission: string): boolean => {
   const user = getUser();
   if (!user) return false;
   
@@ -56,7 +57,11 @@ export const hasPermission = (_permission: string): boolean => {
     return true;
   }
   
-  // 这里可以根据实际需求扩展权限检查逻辑
+  // 检查用户权限列表
+  if (user.permissions && user.permissions.includes(permission)) {
+    return true;
+  }
+  
   return false;
 };
 

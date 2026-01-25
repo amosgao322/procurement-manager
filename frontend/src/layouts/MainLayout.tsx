@@ -6,15 +6,14 @@ import {
   MenuFoldOutlined,
   MenuUnfoldOutlined,
   FileTextOutlined,
-  ShopOutlined,
   DollarOutlined,
   FileDoneOutlined,
-  BarChartOutlined,
   LogoutOutlined,
   UserOutlined,
-  CheckCircleOutlined,
+  TeamOutlined,
+  DatabaseOutlined,
 } from '@ant-design/icons';
-import { clearAuth } from '@/utils/auth';
+import { clearAuth, hasPermission } from '@/utils/auth';
 import { authApi } from '@/services/api';
 import type { User } from '@/types';
 
@@ -25,10 +24,31 @@ const MainLayout: React.FC = () => {
   const [user, setUser] = useState<User | null>(null);
   const navigate = useNavigate();
   const location = useLocation();
+  
+  // 根据当前路径自动展开对应的父菜单
+  const getOpenKeys = () => {
+    const path = location.pathname;
+    if (path.startsWith('/quotations') || path.startsWith('/approval') || path.startsWith('/comparison') || path.startsWith('/suppliers')) {
+      return ['quotation'];
+    }
+    if (path.startsWith('/contracts') || path.startsWith('/contract-templates')) {
+      return ['contract'];
+    }
+    if (path.startsWith('/users')) {
+      return ['system'];
+    }
+    return [];
+  };
+  
+  const [openKeys, setOpenKeys] = useState<string[]>(getOpenKeys());
 
   useEffect(() => {
     loadUserInfo();
   }, []);
+
+  useEffect(() => {
+    setOpenKeys(getOpenKeys());
+  }, [location.pathname]);
 
   const loadUserInfo = async () => {
     try {
@@ -45,43 +65,106 @@ const MainLayout: React.FC = () => {
     navigate('/login');
   };
 
-  const menuItems: MenuProps['items'] = [
+  // 根据权限过滤菜单项
+  const allMenuItems: Array<any> = [
     {
       key: '/boms',
       icon: <FileTextOutlined />,
       label: 'BOM管理',
+      permission: 'bom:view',
     },
     {
-      key: '/suppliers',
-      icon: <ShopOutlined />,
-      label: '供应商管理',
-    },
-    {
-      key: '/quotations',
+      key: 'quotation',
       icon: <DollarOutlined />,
       label: '报价管理',
+      permission: 'quotation:view',
+      children: [
+        {
+          key: '/quotations',
+          label: '报价单列表',
+          permission: 'quotation:view',
+        },
+        {
+          key: '/approval',
+          label: '报价单审批',
+          permission: 'quotation:approve',
+        },
+        {
+          key: '/suppliers',
+          label: '供应商列表',
+          permission: 'supplier:view',
+        },
+        {
+          key: '/comparison',
+          label: '询比价',
+          permission: 'quotation:view',
+        },
+      ],
     },
     {
-      key: '/approval',
-      icon: <CheckCircleOutlined />,
-      label: '审批管理',
+      key: '/materials',
+      icon: <DatabaseOutlined />,
+      label: '物料库管理',
+      permission: 'material:view',
     },
     {
-      key: '/contracts',
+      key: 'contract',
       icon: <FileDoneOutlined />,
       label: '合同管理',
+      permission: 'contract:view',
+      children: [
+        {
+          key: '/contracts',
+          label: '合同列表',
+          permission: 'contract:view',
+        },
+        {
+          key: '/contract-templates',
+          label: '合同模板',
+          permission: 'contract:view',
+        },
+      ],
     },
     {
-      key: '/contract-templates',
-      icon: <FileTextOutlined />,
-      label: '合同模板',
-    },
-    {
-      key: '/comparison',
-      icon: <BarChartOutlined />,
-      label: '询比价',
+      key: 'system',
+      icon: <TeamOutlined />,
+      label: '系统管理',
+      permission: 'user:view',
+      children: [
+        {
+          key: '/users',
+          label: '用户列表',
+          permission: 'user:view',
+        },
+      ],
     },
   ];
+  
+  // 递归过滤菜单项：只显示有权限的菜单
+  const filterMenuItems = (items: Array<any>): Array<any> => {
+    return items
+      .filter((item) => {
+        if (!item.permission) return true;  // 没有权限要求的菜单项始终显示
+        return hasPermission(item.permission);
+      })
+      .map(({ permission, children, ...item }) => {
+        const filteredItem: any = { ...item };
+        // 如果有子菜单，递归过滤
+        if (children && Array.isArray(children)) {
+          const filteredChildren = filterMenuItems(children);
+          // 如果子菜单都被过滤掉了，且父菜单也没有权限，则不显示父菜单
+          if (filteredChildren.length > 0) {
+            filteredItem.children = filteredChildren;
+          } else if (permission && !hasPermission(permission)) {
+            return null; // 父菜单没有权限且没有子菜单，不显示
+          }
+        }
+        return filteredItem;
+      })
+      .filter(item => item !== null);
+  };
+  
+  const menuItems = filterMenuItems(allMenuItems) as MenuProps['items'];
 
   const userMenuItems: MenuProps['items'] = [
     {
@@ -110,23 +193,43 @@ const MainLayout: React.FC = () => {
       <Sider trigger={null} collapsible collapsed={collapsed}>
         <div
           style={{
-            height: 32,
+            height: collapsed ? 64 : 90,
             margin: 16,
             background: 'rgba(255, 255, 255, 0.3)',
             borderRadius: 4,
             display: 'flex',
+            flexDirection: collapsed ? 'column' : 'row',
             alignItems: 'center',
             justifyContent: 'center',
             color: '#fff',
             fontWeight: 'bold',
+            padding: collapsed ? '8px' : '12px 16px',
+            gap: collapsed ? '4px' : '12px',
           }}
         >
-          {collapsed ? '采购' : '采购管理系统'}
+          <img 
+            src="/logo-icon.svg" 
+            alt="永业环境" 
+            style={{ 
+              width: collapsed ? '40px' : '50px',
+              height: collapsed ? '40px' : '50px',
+              objectFit: 'contain',
+              flexShrink: 0
+            }} 
+          />
+          {!collapsed && (
+            <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'flex-start', justifyContent: 'center', flex: 1 }}>
+              <span style={{ fontSize: 16, lineHeight: '1.3', fontWeight: 600 }}>永业环境</span>
+              <span style={{ fontSize: 12, opacity: 0.9, fontWeight: 'normal', lineHeight: '1.3' }}>采购管理系统</span>
+            </div>
+          )}
         </div>
         <Menu
           theme="dark"
           mode="inline"
           selectedKeys={[location.pathname]}
+          openKeys={openKeys}
+          onOpenChange={setOpenKeys}
           items={menuItems}
           onClick={handleMenuClick}
         />

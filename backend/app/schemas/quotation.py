@@ -37,7 +37,7 @@ class QuotationItem(QuotationItemBase):
 
 class QuotationBase(BaseModel):
     """报价基础模型"""
-    code: str
+    code: Optional[str] = None  # 编码可选，为空时自动生成
     supplier_id: int
     bom_id: Optional[int] = None
     title: str
@@ -117,3 +117,62 @@ class QuotationListResponse(BaseModel):
     total: int
     page: int
     page_size: int
+
+
+# ========== 询比价对比相关 Schema ==========
+
+class QuotationBasicInfo(BaseModel):
+    """报价单基本信息（用于对比）"""
+    id: int
+    code: str
+    supplier_id: int
+    supplier_name: str
+    supplier_code: Optional[str] = None
+    credit_rating: Optional[str] = None  # 供应商信用等级
+    total_amount: Optional[Decimal] = None
+    status: str
+    quotation_date: Optional[datetime] = None
+    valid_until: Optional[datetime] = None
+    delivery_days: Optional[int] = None
+    delivery_terms: Optional[str] = None
+    payment_terms: Optional[str] = None
+    currency: Optional[str] = "CNY"
+    
+    class Config:
+        from_attributes = True
+
+
+class ComparisonItemCell(BaseModel):
+    """明细项对比单元格"""
+    quotation_id: int
+    quotation_code: str
+    supplier_name: str
+    unit_price: Optional[Decimal] = None
+    total_price: Optional[Decimal] = None
+    quantity: Optional[Decimal] = None
+    brand: Optional[str] = None
+    delivery_days: Optional[int] = None
+    remark: Optional[str] = None
+    matched: bool = True  # 是否匹配到BOM物料
+
+
+class ComparisonItemRow(BaseModel):
+    """明细项对比行"""
+    bom_item_id: int
+    sequence: Optional[str] = None
+    material_name: str
+    specification: Optional[str] = None
+    unit: Optional[str] = None
+    bom_quantity: Decimal
+    cells: List[ComparisonItemCell]  # 每个报价单的对比数据
+
+
+class QuotationComparisonResponse(BaseModel):
+    """报价单对比响应"""
+    bom_id: int
+    bom_code: str
+    bom_name: str
+    quotations: List[QuotationBasicInfo]  # 参与对比的报价单基本信息
+    item_rows: List[ComparisonItemRow]  # 明细项对比行
+    unmatched_quotations: dict  # 未匹配的报价单物料 {quotation_id: [items]}
+    best_markers: dict  # 最优标记信息

@@ -1,0 +1,48 @@
+<svg
+   xmlns="http://www.w3.org/2000/svg"
+   version="1.1"
+   viewBox="0 0 200 200">
+  <defs>
+    <mask id="circle-mask">
+      <circle
+         style="fill:#ffffff"
+         r="100"
+         cy="100"
+         cx="100" />
+    </mask>
+  </defs>
+  <g
+     style="fill:#ffffff"
+     mask="url(#circle-mask)">
+    <path
+       d="M -1,-1 H 201 V 201 H -1 Z"
+       style="fill:#011658" />
+    <svg
+       version="1.1"
+       height="147.79736"
+       width="200"
+       y="76.101318"
+       x="0.0">
+      <svg
+         height="100%"
+         width="100%"
+         version="1.1"
+         viewBox="0 0 90.8 67.1"
+         enable-background="new 0 0 90.8 67.1">
+        <g
+           style="fill:#ffffff">
+          <g
+             style="clip-rule:evenodd;fill-rule:evenodd">
+            <path
+               style="fill:#ffffff"
+               d="M 20,0 71.2,33.5 58.1,42.1 48,35.6 51.1,33.6 0,0 Z M 42.8,52.2 20,67.1 H 0 L 32.7,45.6 Z" />
+            <path
+               style="fill:#ffffff"
+               d="M 70.8,0 48,14.9 58,21.5 90.8,0 Z m -38,24.9 -13.1,8.6 51.1,33.6 h 20 l -51.1,-33.5 3.1,-2 z" />
+          </g>
+        </g>
+      </svg>
+    </svg>
+  </g>
+</svg>
+

@@ -23,6 +23,14 @@ role_permission_table = Table(
     Column('permission_id', Integer, ForeignKey('permissions.id'), primary_key=True)
 )
 
+# 用户权限关联表（直接为用户分配权限，叠加在角色权限之上）
+user_permission_table = Table(
+    'user_permissions',
+    Base.metadata,
+    Column('user_id', Integer, ForeignKey('users.id'), primary_key=True),
+    Column('permission_id', Integer, ForeignKey('permissions.id'), primary_key=True)
+)
+
 
 class User(Base):
     """用户表"""
@@ -31,7 +39,7 @@ class User(Base):
     id = Column(Integer, primary_key=True, index=True)
     username = Column(String(50), unique=True, index=True, nullable=False, comment="用户名")
     password_hash = Column(String(255), nullable=False, comment="密码哈希")
-    real_name = Column(String(50), nullable=False, comment="真实姓名")
+    real_name = Column(String(50), nullable=True, comment="真实姓名")
     email = Column(String(100), comment="邮箱")
     phone = Column(String(20), comment="手机号")
     is_active = Column(Boolean, default=True, comment="是否激活")
@@ -40,6 +48,7 @@ class User(Base):
     
     # 关联关系
     roles = relationship("Role", secondary=user_role_table, back_populates="users")
+    permissions = relationship("Permission", secondary=user_permission_table, back_populates="users")
 
 
 class Role(Base):
@@ -71,6 +80,7 @@ class Permission(Base):
     
     # 关联关系
     roles = relationship("Role", secondary=role_permission_table, back_populates="permissions")
+    users = relationship("User", secondary=user_permission_table, back_populates="permissions")
 
 
 # 注意：UserRole 和 RolePermission 使用 Table 对象定义（见上方）

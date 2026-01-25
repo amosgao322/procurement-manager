@@ -1,45 +1,67 @@
 import { useState, useEffect } from 'react';
-import { Table, Button, Input, Space, message, Modal, Upload } from 'antd';
-import { PlusOutlined, SearchOutlined, UploadOutlined, DownloadOutlined, EyeOutlined } from '@ant-design/icons';
+import { Table, Button, Input, Space, message, Modal, Upload, Form, Select, DatePicker, Card, Row, Col } from 'antd';
+import { PlusOutlined, SearchOutlined, UploadOutlined, DownloadOutlined, EyeOutlined, ReloadOutlined } from '@ant-design/icons';
 import { useNavigate } from 'react-router-dom';
 import type { ColumnsType } from 'antd/es/table';
 import { bomApi } from '@/services/api';
 import type { Bom } from '@/types';
 import dayjs from 'dayjs';
 
+const { RangePicker } = DatePicker;
+
 const BomList: React.FC = () => {
+  const navigate = useNavigate();
   const [data, setData] = useState<Bom[]>([]);
   const [loading, setLoading] = useState(false);
   const [total, setTotal] = useState(0);
   const [page, setPage] = useState(1);
   const [pageSize, setPageSize] = useState(20);
-  const [keyword, setKeyword] = useState('');
-  const navigate = useNavigate();
+  
+  // 搜索表单
+  const [form] = Form.useForm();
 
   useEffect(() => {
     loadData();
-  }, [page, pageSize, keyword]);
+  }, [page, pageSize]);
 
   const loadData = async () => {
     setLoading(true);
     try {
+      // 使用 getFieldsValue 而不是 validateFields，以避免不必要的验证错误
+      const values = form.getFieldsValue();
       const response = await bomApi.getList({
         page,
         page_size: pageSize,
-        keyword: keyword || undefined,
+        keyword: values.keyword, // 编码或名称
+        product_name: values.product_name,
+        status: values.status,
+        customer_name: values.customer_name,
+        prepared_by: values.prepared_by,
+        created_at_start: values.date_range?.[0]?.format('YYYY-MM-DD HH:mm:ss'),
+        created_at_end: values.date_range?.[1]?.format('YYYY-MM-DD HH:mm:ss'),
       });
       setData(response.items);
       setTotal(response.total);
     } catch (error) {
+      console.error(error);
       message.error('加载BOM列表失败');
     } finally {
       setLoading(false);
     }
   };
 
-  const handleSearch = (value: string) => {
-    setKeyword(value);
+  const handleSearch = () => {
+    if (page === 1) {
+      loadData();
+    } else {
+      setPage(1);
+    }
+  };
+
+  const handleReset = () => {
+    form.resetFields();
     setPage(1);
+    loadData();
   };
 
   const handleDelete = async (id: number) => {
@@ -80,7 +102,10 @@ const BomList: React.FC = () => {
     try {
       const response = await bomApi.import(file);
       if (response.success) {
-        message.success(`导入成功！共 ${response.success_rows}/${response.total_rows} 条数据`);
+        const successCount = response.items_count || 0;
+        const errorCount = response.error_count || 0;
+        const totalCount = successCount + errorCount;
+        message.success(`导入成功！共 ${successCount}/${totalCount} 条数据`);
         if (response.errors && response.errors.length > 0) {
           Modal.warning({
             title: '导入警告',
@@ -159,8 +184,6 @@ const BomList: React.FC = () => {
       const url = window.URL.createObjectURL(blob);
       const a = document.createElement('a');
       a.href = url;
-      // 从响应头获取文件名，如果没有则使用默认名称
-      // 这里可能需要从响应头获取文件名
       a.download = `BOM_${id}.xlsx`;
       document.body.appendChild(a);
       a.click();
@@ -174,34 +197,55 @@ const BomList: React.FC = () => {
 
   const columns: ColumnsType<Bom> = [
     {
-      title: '编码',
+      title: 'BOM编码',
       dataIndex: 'code',
       key: 'code',
+      fixed: 'left',
+      width: 150,
     },
     {
-      title: '名称',
+      title: 'BOM名称',
       dataIndex: 'name',
       key: 'name',
+      fixed: 'left',
+      width: 200,
     },
     {
-      title: '产品名称',
+      title: '项目名称',
       dataIndex: 'product_name',
       key: 'product_name',
+      width: 150,
+    },
+    {
+      title: '客户名称',
+      dataIndex: 'customer_name',
+      key: 'customer_name',
+      width: 150,
     },
     {
       title: '状态',
       dataIndex: 'status',
       key: 'status',
+      width: 100,
+    },
+    {
+      title: '制单人',
+      dataIndex: 'prepared_by',
+      key: 'prepared_by',
+      width: 100,
     },
     {
       title: '创建时间',
       dataIndex: 'created_at',
       key: 'created_at',
+      width: 180,
       render: (text) => text ? dayjs(text).format('YYYY-MM-DD HH:mm:ss') : '-',
     },
     {
       title: '操作',
       key: 'action',
+      fixed: 'right',
+      width: 200,
       render: (_, record) => (
         <Space>
           <Button
@@ -232,33 +276,73 @@ const BomList: React.FC = () => {
 
   return (
     <div>
-      <Space style={{ marginBottom: 16, width: '100%' }} direction="vertical" size="middle">
-        <Space>
-          <Input.Search
-            placeholder="搜索BOM编码或名称"
-            allowClear
-            style={{ width: 300 }}
-            onSearch={handleSearch}
-            enterButton={<SearchOutlined />}
-          />
-          <Upload
-            accept=".xlsx,.xls"
-            showUploadList={false}
-            beforeUpload={handleImport}
-          >
-            <Button icon={<UploadOutlined />}>导入Excel</Button>
-          </Upload>
-          <Button type="primary" icon={<PlusOutlined />} onClick={() => navigate('/boms/new')}>
-            新建BOM
-          </Button>
-        </Space>
-      </Space>
+      <Card style={{ marginBottom: 16 }}>
+        <Form form={form} layout="inline" onFinish={handleSearch}>
+          <Row gutter={[16, 16]} style={{ width: '100%' }}>
+            <Col span={6}>
+              <Form.Item name="keyword" label="关键字" style={{ width: '100%', marginBottom: 0 }}>
+                <Input placeholder="编码/名称" allowClear />
+              </Form.Item>
+            </Col>
+            <Col span={6}>
+              <Form.Item name="product_name" label="项目名称" style={{ width: '100%', marginBottom: 0 }}>
+                <Input placeholder="项目名称" allowClear />
+              </Form.Item>
+            </Col>
+            <Col span={6}>
+              <Form.Item name="status" label="状态" style={{ width: '100%', marginBottom: 0 }}>
+                <Select placeholder="请选择状态" allowClear>
+                  <Select.Option value="草稿">草稿</Select.Option>
+                  <Select.Option value="生效">生效</Select.Option>
+                  <Select.Option value="归档">归档</Select.Option>
+                </Select>
+              </Form.Item>
+            </Col>
+            <Col span={6}>
+              <Form.Item name="prepared_by" label="制单人" style={{ width: '100%', marginBottom: 0 }}>
+                <Input placeholder="制单人" allowClear />
+              </Form.Item>
+            </Col>
+            <Col span={6} style={{ marginTop: 16 }}>
+              <Form.Item name="customer_name" label="客户名称" style={{ width: '100%', marginBottom: 0 }}>
+                <Input placeholder="客户名称" allowClear />
+              </Form.Item>
+            </Col>
+            <Col span={8} style={{ marginTop: 16 }}>
+              <Form.Item name="date_range" label="创建时间" style={{ width: '100%', marginBottom: 0 }}>
+                <RangePicker showTime />
+              </Form.Item>
+            </Col>
+            <Col span={10} style={{ marginTop: 16, textAlign: 'right' }}>
+              <Space>
+                <Button type="primary" htmlType="submit" icon={<SearchOutlined />}>
+                  查询
+                </Button>
+                <Button icon={<ReloadOutlined />} onClick={handleReset}>
+                  重置
+                </Button>
+                <Upload
+                  accept=".xlsx,.xls"
+                  showUploadList={false}
+                  beforeUpload={handleImport}
+                >
+                  <Button icon={<UploadOutlined />}>导入</Button>
+                </Upload>
+                <Button type="primary" icon={<PlusOutlined />} onClick={() => navigate('/boms/new')}>
+                  新建
+                </Button>
+              </Space>
+            </Col>
+          </Row>
+        </Form>
+      </Card>
 
       <Table
         columns={columns}
         dataSource={data}
         rowKey="id"
         loading={loading}
+        scroll={{ x: 1500 }}
         pagination={{
           current: page,
           pageSize,

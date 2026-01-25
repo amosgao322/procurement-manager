@@ -1,11 +1,13 @@
 import { useState } from 'react';
-import { Form, Input, Button, Card, message } from 'antd';
+import { Form, Input, Button, Card, message, Typography } from 'antd';
 import { UserOutlined, LockOutlined } from '@ant-design/icons';
 import { useNavigate } from 'react-router-dom';
 import { authApi } from '@/services/api';
 import { setToken, setUser } from '@/utils/auth';
 import type { LoginRequest } from '@/types';
 import './index.css';
+
+const { Title, Text } = Typography;
 
 const Login: React.FC = () => {
   const [loading, setLoading] = useState(false);
@@ -28,7 +30,12 @@ const Login: React.FC = () => {
 
   return (
     <div className="login-container">
-      <Card className="login-card" title="采购管理系统" bordered={false}>
+      <Card className="login-card" bordered={false}>
+        <div className="login-header">
+          <img src="/logo.svg" alt="永业环境" className="login-logo" />
+          <Title level={3} className="login-title">永业环境采购管理系统</Title>
+          <Text type="secondary" className="login-subtitle">湖南永业环境科技有限公司</Text>
+        </div>
         <Form
           name="login"
           onFinish={onFinish}

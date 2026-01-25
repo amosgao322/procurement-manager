@@ -44,6 +44,16 @@ async def login(login_data: LoginRequest, db: Session = Depends(get_db)):
     # 获取用户角色
     role_names = [role.name for role in user.roles]
     
+    # 获取用户所有权限（角色权限 + 直接分配的权限）
+    permission_codes = set()
+    # 从角色获取权限
+    for role in user.roles:
+        for perm in role.permissions:
+            permission_codes.add(perm.code)
+    # 从直接分配的权限获取
+    for perm in user.permissions:
+        permission_codes.add(perm.code)
+    
     # 返回响应
     return LoginResponse(
         access_token=access_token,
@@ -53,7 +63,8 @@ async def login(login_data: LoginRequest, db: Session = Depends(get_db)):
             username=user.username,
             real_name=user.real_name,
             email=user.email,
-            roles=role_names
+            roles=role_names,
+            permissions=list(permission_codes)
         )
     )
 
@@ -63,11 +74,22 @@ async def get_me(current_user: User = Depends(get_current_user)):
     """获取当前用户信息"""
     role_names = [role.name for role in current_user.roles]
     
+    # 获取用户所有权限（角色权限 + 直接分配的权限）
+    permission_codes = set()
+    # 从角色获取权限
+    for role in current_user.roles:
+        for perm in role.permissions:
+            permission_codes.add(perm.code)
+    # 从直接分配的权限获取
+    for perm in current_user.permissions:
+        permission_codes.add(perm.code)
+    
     return UserInfo(
         id=current_user.id,
         username=current_user.username,
         real_name=current_user.real_name,
         email=current_user.email,
-        roles=role_names
+        roles=role_names,
+        permissions=list(permission_codes)
     )
 

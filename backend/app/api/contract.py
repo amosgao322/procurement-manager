@@ -13,7 +13,7 @@ from app.models.quotation import Quotation, QuotationItem
 from app.models.supplier import Supplier
 from app.schemas.contract import ContractCreate, ContractUpdate, Contract as ContractSchema, ContractListResponse
 from app.schemas.contract_template import GenerateContractRequest
-from app.core.dependencies import get_current_user
+from app.core.dependencies import get_current_user, require_permission
 from app.models.user import User
 from app.utils.contract_template import ContractTemplateProcessor
 
@@ -26,7 +26,7 @@ async def get_contracts(
     page_size: int = Query(20, ge=1, le=100),
     keyword: Optional[str] = None,
     db: Session = Depends(get_db),
-    current_user: User = Depends(get_current_user)
+    current_user: User = Depends(require_permission("contract:view"))
 ):
     """获取合同列表"""
     query = db.query(Contract)

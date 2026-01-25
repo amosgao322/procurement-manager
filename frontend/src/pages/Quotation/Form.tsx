@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react';
-import { Form, Input, InputNumber, Button, Card, message, Space, Table, Select, DatePicker } from 'antd';
+import { Form, Input, InputNumber, Button, Card, message, Space, Table, Select, DatePicker, Row, Col } from 'antd';
 import { PlusOutlined, DeleteOutlined } from '@ant-design/icons';
 import { useNavigate, useParams } from 'react-router-dom';
 import type { ColumnsType } from 'antd/es/table';
@@ -63,9 +63,8 @@ const QuotationForm: React.FC = () => {
         quotation_date: data.quotation_date ? dayjs(data.quotation_date) : null,
         valid_until: data.valid_until ? dayjs(data.valid_until) : null,
         delivery_days: data.delivery_days,
+        // 页面不展示币种/付款条件/交货条件，这里仅保证编辑时提交默认值一致
         currency: data.currency || 'CNY',
-        payment_terms: data.payment_terms,
-        delivery_terms: data.delivery_terms,
         remark: data.remark,
       });
       
@@ -76,6 +75,7 @@ const QuotationForm: React.FC = () => {
           quantity: typeof item.quantity === 'string' ? parseFloat(item.quantity) : item.quantity,
           unit_price: typeof item.unit_price === 'string' ? parseFloat(item.unit_price) : item.unit_price,
           total_price: typeof item.total_price === 'string' ? parseFloat(item.total_price) : item.total_price,
+          delivery_days: typeof item.delivery_days === 'string' ? parseInt(item.delivery_days as any, 10) : item.delivery_days,
         })));
       } else {
         setItems([]);
@@ -99,6 +99,8 @@ const QuotationForm: React.FC = () => {
         quantity: item.quantity,
         unit_price: item.unit_price || 0,
         total_price: item.total_price || (item.quantity * (item.unit_price || 0)),
+        brand: '',
+        delivery_days: undefined,
         remark: item.remark || '',
       }));
       setItems(quotationItems);
@@ -116,6 +118,8 @@ const QuotationForm: React.FC = () => {
       quantity: 0,
       unit_price: 0,
       total_price: 0,
+      brand: '',
+      delivery_days: undefined,
       remark: '',
     };
     setItems([...items, newItem]);
@@ -172,11 +176,16 @@ const QuotationForm: React.FC = () => {
         ...values,
         quotation_date: values.quotation_date ? values.quotation_date.toISOString() : undefined,
         valid_until: values.valid_until ? values.valid_until.toISOString() : undefined,
+        // 币种默认人民币，且不在页面展示；付款条件/交货条件也不展示
+        currency: 'CNY',
+        payment_terms: undefined,
+        delivery_terms: undefined,
         items: items.map(item => ({
           ...item,
           quantity: Number(item.quantity),
           unit_price: Number(item.unit_price),
           total_price: item.total_price ? Number(item.total_price) : Number(item.quantity) * Number(item.unit_price),
+          delivery_days: item.delivery_days !== undefined && item.delivery_days !== null ? Number(item.delivery_days) : undefined,
         })),
       };
 
@@ -286,6 +295,35 @@ const QuotationForm: React.FC = () => {
       render: (text) => text ? `¥${Number(text).toFixed(2)}` : '-',
     },
     {
+      title: '品牌',
+      dataIndex: 'brand',
+      key: 'brand',
+      width: 160,
+      render: (text, _record, index) => (
+        <Input
+          value={text}
+          onChange={(e) => updateItem(index, 'brand', e.target.value)}
+          placeholder="品牌"
+        />
+      ),
+    },
+    {
+      title: '交货天数',
+      dataIndex: 'delivery_days',
+      key: 'delivery_days',
+      width: 120,
+      render: (text, _record, index) => (
+        <InputNumber
+          value={text}
+          onChange={(value) => updateItem(index, 'delivery_days', value ?? undefined)}
+          min={0}
+          precision={0}
+          style={{ width: '100%' }}
+          placeholder="天数"
+        />
+      ),
+    },
+    {
       title: '备注',
       dataIndex: 'remark',
       key: 'remark',
@@ -321,86 +359,88 @@ const QuotationForm: React.FC = () => {
         layout="vertical"
         onFinish={onFinish}
         autoComplete="off"
+        initialValues={{ currency: 'CNY' }}
       >
-        <Form.Item
-          label="报价单编码"
-          name="code"
-          rules={[{ required: true, message: '请输入报价单编码' }]}
-        >
-          <Input placeholder="报价单编码" disabled={!!isEdit} />
-        </Form.Item>
+        <Row gutter={16}>
+          <Col span={12}>
+            <Form.Item
+              label="报价单编码"
+              name="code"
+              tooltip="留空将自动生成编码（格式：Q日期-序号，如：Q20250101-001）"
+            >
+              <Input placeholder="留空自动生成" disabled={!!isEdit} />
+            </Form.Item>
+          </Col>
+          <Col span={12}>
+            <Form.Item
+              label="报价单标题"
+              name="title"
+              rules={[{ required: true, message: '请输入报价单标题' }]}
+            >
+              <Input placeholder="报价单标题" />
+            </Form.Item>
+          </Col>
+        </Row>
 
-        <Form.Item
-          label="报价单标题"
-          name="title"
-          rules={[{ required: true, message: '请输入报价单标题' }]}
-        >
-          <Input placeholder="报价单标题" />
-        </Form.Item>
+        <Row gutter={16}>
+          <Col span={12}>
+            <Form.Item
+              label="供应商"
+              name="supplier_id"
+              rules={[{ required: true, message: '请选择供应商' }]}
+            >
+              <Select
+                placeholder="选择供应商"
+                showSearch
+                filterOption={(input, option) =>
+                  String(option?.label ?? '').toLowerCase().includes(input.toLowerCase())
+                }
+              >
+                {suppliers.map(sup => (
+                  <Select.Option key={sup.id} value={sup.id} label={sup.name}>
+                    {sup.name} ({sup.code})
+                  </Select.Option>
+                ))}
+              </Select>
+            </Form.Item>
+          </Col>
+          <Col span={12}>
+            <Form.Item label="关联BOM" name="bom_id">
+              <Select
+                placeholder="选择BOM（可选，选择后会自动填充明细）"
+                showSearch
+                filterOption={(input, option) =>
+                  String(option?.label ?? '').toLowerCase().includes(input.toLowerCase())
+                }
+                onChange={handleBomChange}
+              >
+                {boms.map(bom => (
+                  <Select.Option key={bom.id} value={bom.id} label={bom.name}>
+                    {bom.name} ({bom.code})
+                  </Select.Option>
+                ))}
+              </Select>
+            </Form.Item>
+          </Col>
+        </Row>
 
-        <Form.Item
-          label="供应商"
-          name="supplier_id"
-          rules={[{ required: true, message: '请选择供应商' }]}
-        >
-          <Select placeholder="选择供应商" showSearch filterOption={(input, option) =>
-            String(option?.label ?? '').toLowerCase().includes(input.toLowerCase())
-          }>
-            {suppliers.map(sup => (
-              <Select.Option key={sup.id} value={sup.id} label={sup.name}>
-                {sup.name} ({sup.code})
-              </Select.Option>
-            ))}
-          </Select>
-        </Form.Item>
-
-        <Form.Item
-          label="关联BOM"
-          name="bom_id"
-        >
-          <Select
-            placeholder="选择BOM（可选，选择后会自动填充明细）"
-            showSearch
-            filterOption={(input, option) =>
-              String(option?.label ?? '').toLowerCase().includes(input.toLowerCase())
-            }
-            onChange={handleBomChange}
-          >
-            {boms.map(bom => (
-              <Select.Option key={bom.id} value={bom.id} label={bom.name}>
-                {bom.name} ({bom.code})
-              </Select.Option>
-            ))}
-          </Select>
-        </Form.Item>
-
-        <Form.Item label="报价日期" name="quotation_date">
-          <DatePicker style={{ width: '100%' }} />
-        </Form.Item>
-
-        <Form.Item label="有效期至" name="valid_until">
-          <DatePicker style={{ width: '100%' }} />
-        </Form.Item>
-
-        <Form.Item label="交货天数" name="delivery_days">
-          <InputNumber min={0} placeholder="交货天数" style={{ width: '100%' }} />
-        </Form.Item>
-
-        <Form.Item label="币种" name="currency" initialValue="CNY">
-          <Select>
-            <Select.Option value="CNY">人民币 (CNY)</Select.Option>
-            <Select.Option value="USD">美元 (USD)</Select.Option>
-            <Select.Option value="EUR">欧元 (EUR)</Select.Option>
-          </Select>
-        </Form.Item>
-
-        <Form.Item label="付款条件" name="payment_terms">
-          <Input.TextArea rows={2} placeholder="付款条件" />
-        </Form.Item>
-
-        <Form.Item label="交货条件" name="delivery_terms">
-          <Input.TextArea rows={2} placeholder="交货条件" />
-        </Form.Item>
+        <Row gutter={16}>
+          <Col span={8}>
+            <Form.Item label="报价日期" name="quotation_date">
+              <DatePicker style={{ width: '100%' }} />
+            </Form.Item>
+          </Col>
+          <Col span={8}>
+            <Form.Item label="有效期至" name="valid_until">
+              <DatePicker style={{ width: '100%' }} />
+            </Form.Item>
+          </Col>
+          <Col span={8}>
+            <Form.Item label="交货天数(整体)" name="delivery_days">
+              <InputNumber min={0} placeholder="天数" style={{ width: '100%' }} />
+            </Form.Item>
+          </Col>
+        </Row>
 
         <Form.Item label="备注" name="remark">
           <Input.TextArea rows={2} placeholder="备注" />
@@ -418,6 +458,7 @@ const QuotationForm: React.FC = () => {
             rowKey={(_record, index) => `item-${index}`}
             pagination={false}
             size="small"
+            scroll={{ x: 'max-content' }}
           />
         </div>
 

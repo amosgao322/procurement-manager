@@ -21,9 +21,10 @@ class UserInfo(BaseModel):
     """用户信息"""
     id: int
     username: str
-    real_name: str
+    real_name: Optional[str] = None
     email: Optional[str] = None
     roles: List[str] = []
+    permissions: List[str] = []  # 权限代码列表
 
     class Config:
         from_attributes = True

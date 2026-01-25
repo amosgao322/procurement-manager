@@ -41,6 +41,11 @@ async def get_current_user(
             detail="用户已被禁用"
         )
     
+    # 确保加载关联关系（角色和权限）
+    # SQLAlchemy 会自动延迟加载，但为了确保数据完整，我们可以显式访问
+    _ = user.roles  # 触发角色加载
+    _ = user.permissions  # 触发权限加载
+    
     return user
 
 
@@ -50,11 +55,17 @@ def require_permission(permission_code: str):
         current_user: User = Depends(get_current_user),
         db: Session = Depends(get_db)
     ) -> User:
-        # 获取用户的所有权限
+        # 获取用户的所有权限（角色权限 + 直接分配的权限）
         user_permissions = set()
+        
+        # 从角色获取权限
         for role in current_user.roles:
             for perm in role.permissions:
                 user_permissions.add(perm.code)
+        
+        # 从直接分配的权限获取
+        for perm in current_user.permissions:
+            user_permissions.add(perm.code)
         
         # 检查是否有权限
         if permission_code not in user_permissions:
@@ -67,3 +78,16 @@ def require_permission(permission_code: str):
     
     return permission_checker
 
+
+async def require_admin(
+    current_user: User = Depends(get_current_user)
+) -> User:
+    """要求管理员权限"""
+    # 检查用户是否有管理员角色
+    role_codes = {role.code for role in current_user.roles}
+    if "admin" not in role_codes:
+        raise HTTPException(
+            status_code=status.HTTP_403_FORBIDDEN,
+            detail="此操作需要管理员权限"
+        )
+    return current_user

@@ -1,10 +1,11 @@
 import { useState, useEffect } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { Card, Descriptions, Table, Button, Space, message, Spin, Tag, Modal, Input } from 'antd';
-import { ArrowLeftOutlined, CheckOutlined, CloseOutlined } from '@ant-design/icons';
+import { ArrowLeftOutlined, CheckOutlined, CloseOutlined, DeleteOutlined } from '@ant-design/icons';
 import type { ColumnsType } from 'antd/es/table';
 import { quotationApi } from '@/services/api';
 import type { Quotation, QuotationItem } from '@/types';
+import { hasPermission } from '@/utils/auth';
 import dayjs from 'dayjs';
 
 const { TextArea } = Input;
@@ -93,6 +94,26 @@ const QuotationDetail: React.FC = () => {
     });
   };
 
+  const handleDelete = () => {
+    Modal.confirm({
+      title: '确认删除',
+      content: '确定要删除这个报价单吗？删除后无法恢复。',
+      okText: '确定',
+      okType: 'danger',
+      cancelText: '取消',
+      onOk: async () => {
+        if (!id) return;
+        try {
+          await quotationApi.delete(Number(id));
+          message.success('删除成功');
+          navigate('/quotations');
+        } catch (error: any) {
+          message.error(error?.response?.data?.detail || '删除失败');
+        }
+      },
+    });
+  };
+
   const getStatusTag = (status: string) => {
     const statusMap: Record<string, { color: string; text: string }> = {
       draft: { color: 'default', text: '草稿' },
@@ -112,7 +133,7 @@ const QuotationDetail: React.FC = () => {
       width: 80,
     },
     {
-      title: '设备名称',
+      title: '物料名称',
       dataIndex: 'material_name',
       key: 'material_name',
     },
@@ -187,6 +208,11 @@ const QuotationDetail: React.FC = () => {
             <Button type="primary" onClick={handleSubmit}>
               提交审批
             </Button>
+            {hasPermission('quotation:delete') && (
+              <Button danger icon={<DeleteOutlined />} onClick={handleDelete}>
+                删除
+              </Button>
+            )}
           </>
         )}
         {quotation.status === 'submitted' && (

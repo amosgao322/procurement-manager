@@ -7,7 +7,8 @@ from typing import List
 
 class Settings(BaseSettings):
     # 应用配置
-    PROJECT_NAME: str = "采购管理系统"
+    PROJECT_NAME: str = "永业环境采购管理系统"
+    COMPANY_NAME: str = "湖南永业环境科技有限公司"
     VERSION: str = "1.0.0"
     API_V1_STR: str = "/api/v1"
     

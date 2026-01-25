@@ -18,8 +18,8 @@ from app.core.exception_handler import (
 )
 
 app = FastAPI(
-    title="采购管理系统API",
-    description="轻量级ERP系统 - BOM、供应商、报价、合同管理",
+    title="永业环境采购管理系统API",
+    description="湖南永业环境科技有限公司 - 采购管理系统，提供BOM、供应商、报价、合同管理功能",
     version="1.0.0"
 )
 
@@ -69,19 +69,25 @@ app.add_middleware(
 
 @app.get("/")
 async def root():
-    return {"message": "采购管理系统API", "version": "1.0.0"}
+    return {
+        "message": "永业环境采购管理系统API",
+        "company": "湖南永业环境科技有限公司",
+        "version": "1.0.0"
+    }
 
 @app.get("/health")
 async def health_check():
     return {"status": "ok"}
 
 # 注册API路由
-from app.api import auth, bom, quotation, supplier, contract, contract_template
+from app.api import auth, bom, quotation, supplier, contract, contract_template, user, material
 
 app.include_router(auth.router, prefix="/api/v1")
 app.include_router(bom.router, prefix="/api/v1")
 app.include_router(quotation.router, prefix="/api/v1")
 app.include_router(supplier.router, prefix="/api/v1")
+app.include_router(material.router, prefix="/api/v1")
 app.include_router(contract.router, prefix="/api/v1")
 app.include_router(contract_template.router, prefix="/api/v1")
+app.include_router(user.router, prefix="/api/v1")
 

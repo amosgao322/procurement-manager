@@ -3,15 +3,27 @@ import type {
   LoginRequest,
   LoginResponse,
   User,
+  UserDetail,
+  UserCreate,
+  UserUpdate,
+  UserListResponse,
+  RoleListResponse,
+  PermissionListResponse,
   Bom,
   BomListResponse,
   Supplier,
   Quotation,
   Contract,
   ContractTemplate,
+  QuotationComparisonResponse,
+  QuotationBasicInfo,
   GenerateContractRequest,
   PaginationParams,
   ExcelImportResponse,
+  Material,
+  MaterialListResponse,
+  BOMItemPriceHistoryResponse,
+  BOMCostAnalysisResponse,
 } from '@/types';
 
 // 认证API
@@ -26,7 +38,14 @@ export const authApi = {
 
 // BOM API
 export const bomApi = {
-  getList: (params?: PaginationParams): Promise<BomListResponse> => {
+  getList: (params?: PaginationParams & {
+    product_name?: string;
+    status?: string;
+    customer_name?: string;
+    prepared_by?: string;
+    created_at_start?: string;
+    created_at_end?: string;
+  }): Promise<BomListResponse> => {
     return request.get('/boms', { params });
   },
   getById: (id: number): Promise<Bom> => {
@@ -55,6 +74,12 @@ export const bomApi = {
       responseType: 'blob',
     });
   },
+  getItemPriceHistory: (bomId: number, itemId: number): Promise<BOMItemPriceHistoryResponse> => {
+    return request.get(`/boms/${bomId}/items/${itemId}/price-history`);
+  },
+  calculateCost: (bomId: number): Promise<BOMCostAnalysisResponse> => {
+    return request.post(`/boms/${bomId}/calculate-cost`);
+  },
 };
 
 // 供应商API
@@ -78,7 +103,14 @@ export const supplierApi = {
 
 // 报价API
 export const quotationApi = {
-  getList: (params?: PaginationParams & { status?: string; status_in?: string }): Promise<{ items: Quotation[]; total: number; page: number; page_size: number }> => {
+  getList: (params?: PaginationParams & { 
+    status?: string; 
+    status_in?: string;
+    title?: string;
+    supplier_id?: number;
+    created_at_start?: string;
+    created_at_end?: string;
+  }): Promise<{ items: Quotation[]; total: number; page: number; page_size: number }> => {
     return request.get('/quotations', { params });
   },
   getById: (id: number): Promise<Quotation> => {
@@ -98,6 +130,9 @@ export const quotationApi = {
   },
   reject: (id: number, comment?: string): Promise<Quotation> => {
     return request.post(`/quotations/${id}/reject`, { comment });
+  },
+  delete: (id: number): Promise<void> => {
+    return request.delete(`/quotations/${id}`);
   },
 };
 
@@ -147,8 +182,78 @@ export const comparisonApi = {
   requestQuotation: (bomId: number): Promise<any> => {
     return request.post(`/boms/${bomId}/request-quotation`);
   },
-  compareQuotations: (bomId: number): Promise<any> => {
+  compareQuotations: (bomId: number): Promise<QuotationComparisonResponse> => {
     return request.get(`/boms/${bomId}/compare-quotations`);
+  },
+  getQuotationsByBom: (bomId: number): Promise<QuotationBasicInfo[]> => {
+    return request.get(`/quotations/by-bom/${bomId}`);
+  },
+  exportComparison: (bomId: number): Promise<Blob> => {
+    return request.post(`/boms/${bomId}/compare-quotations/export`, {}, {
+      responseType: 'blob',
+    });
+  },
+};
+
+// 用户管理API
+export const userApi = {
+  getList: (params?: {
+    skip?: number;
+    limit?: number;
+    search?: string;
+    role_code?: string;
+    is_active?: boolean;
+  }): Promise<UserListResponse> => {
+    return request.get('/users', { params });
+  },
+  getById: (id: number): Promise<UserDetail> => {
+    return request.get(`/users/${id}`);
+  },
+  create: (data: UserCreate): Promise<UserDetail> => {
+    return request.post('/users', data);
+  },
+  update: (id: number, data: UserUpdate): Promise<UserDetail> => {
+    return request.put(`/users/${id}`, data);
+  },
+  updatePassword: (id: number, password: string): Promise<void> => {
+    return request.put(`/users/${id}/password`, { password });
+  },
+  delete: (id: number): Promise<void> => {
+    return request.delete(`/users/${id}`);
+  },
+  assignRoles: (id: number, roleCodes: string[]): Promise<UserDetail> => {
+    return request.put(`/users/${id}/roles`, { role_codes: roleCodes });
+  },
+  getRoles: (): Promise<RoleListResponse> => {
+    return request.get('/users/roles/list');
+  },
+  getRole: (id: number): Promise<any> => {
+    return request.get(`/users/roles/${id}`);
+  },
+  assignPermissionsToRole: (roleId: number, permissionCodes: string[]): Promise<any> => {
+    return request.put(`/users/roles/${roleId}/permissions`, { permission_codes: permissionCodes });
+  },
+  getPermissions: (): Promise<PermissionListResponse> => {
+    return request.get('/users/permissions/list');
+  },
+};
+
+// 物料库API
+export const materialApi = {
+  getList: (params?: PaginationParams & { price_status?: string }): Promise<MaterialListResponse> => {
+    return request.get('/materials', { params });
+  },
+  getById: (id: number): Promise<Material> => {
+    return request.get(`/materials/${id}`);
+  },
+  create: (data: Material): Promise<Material> => {
+    return request.post('/materials', data);
+  },
+  update: (id: number, data: Partial<Material>): Promise<Material> => {
+    return request.put(`/materials/${id}`, data);
+  },
+  delete: (id: number): Promise<void> => {
+    return request.delete(`/materials/${id}`);
   },
 };
 

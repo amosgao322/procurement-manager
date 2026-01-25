@@ -3,17 +3,38 @@
   justify-content: center;
   align-items: center;
   min-height: 100vh;
-  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+  background: linear-gradient(135deg, #1e3a8a 0%, #3b82f6 100%);
 }
 
 .login-card {
-  width: 400px;
+  width: 420px;
   box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
 }
 
-.login-card .ant-card-head-title {
+.login-card .ant-card-body {
+  padding: 32px;
+}
+
+.login-header {
   text-align: center;
-  font-size: 24px;
-  font-weight: bold;
+  margin-bottom: 32px;
+}
+
+.login-logo {
+  width: 120px;
+  height: 120px;
+  margin-bottom: 16px;
+  object-fit: contain;
+}
+
+.login-title {
+  margin-bottom: 8px !important;
+  color: #1e3a8a;
+  font-weight: 600;
+}
+
+.login-subtitle {
+  font-size: 14px;
+  color: #666;
 }
 

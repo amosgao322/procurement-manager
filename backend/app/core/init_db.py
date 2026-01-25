@@ -40,6 +40,13 @@ def init_base_data(db: Session):
         {"code": "supplier:update", "name": "供应商修改", "resource": "supplier", "action": "update"},
         {"code": "supplier:delete", "name": "供应商删除", "resource": "supplier", "action": "delete"},
         {"code": "supplier:view", "name": "供应商查看", "resource": "supplier", "action": "view"},
+
+        # 物料库权限
+        {"code": "material:create", "name": "物料创建", "resource": "material", "action": "create"},
+        {"code": "material:update", "name": "物料修改", "resource": "material", "action": "update"},
+        {"code": "material:delete", "name": "物料删除", "resource": "material", "action": "delete"},
+        {"code": "material:view", "name": "物料查看", "resource": "material", "action": "view"},
+        {"code": "material:manage_prices", "name": "物料价格维护", "resource": "material", "action": "manage_prices"},
         
         # 报价权限
         {"code": "quotation:create", "name": "报价单创建", "resource": "quotation", "action": "create"},
@@ -55,6 +62,14 @@ def init_base_data(db: Session):
         {"code": "contract:update", "name": "合同修改", "resource": "contract", "action": "update"},
         {"code": "contract:delete", "name": "合同删除", "resource": "contract", "action": "delete"},
         {"code": "contract:view", "name": "合同查看", "resource": "contract", "action": "view"},
+        
+        # 用户管理权限
+        {"code": "user:create", "name": "用户创建", "resource": "user", "action": "create"},
+        {"code": "user:update", "name": "用户修改", "resource": "user", "action": "update"},
+        {"code": "user:delete", "name": "用户删除", "resource": "user", "action": "delete"},
+        {"code": "user:view", "name": "用户查看", "resource": "user", "action": "view"},
+        {"code": "user:manage_roles", "name": "用户角色管理", "resource": "user", "action": "manage_roles"},
+        {"code": "user:manage_permissions", "name": "用户权限管理", "resource": "user", "action": "manage_permissions"},
     ]
     
     for perm_data in permissions_data:
@@ -71,49 +86,29 @@ def init_base_data(db: Session):
         {
             "code": "admin",
             "name": "管理员",
-            "description": "系统管理员，拥有所有权限",
+            "description": "系统管理员，拥有所有权限，可以创建和管理用户账号",
             "permissions": [p["code"] for p in permissions_data]
         },
         {
             "code": "purchaser",
-            "name": "采购",
+            "name": "采购员",
             "description": "采购人员，可以创建BOM、报价单、合同",
             "permissions": [
                 "bom:create", "bom:update", "bom:view",
                 "supplier:create", "supplier:update", "supplier:view",
+                "material:create", "material:update", "material:view", "material:manage_prices",
                 "quotation:create", "quotation:update", "quotation:view", "quotation:submit",
                 "contract:create", "contract:update", "contract:view"
             ]
         },
         {
-            "code": "approver",
-            "name": "审批人",
-            "description": "审批人员，可以审批报价单",
+            "code": "technician",
+            "name": "技术员",
+            "description": "技术人员，可以创建和管理BOM",
             "permissions": [
-                "bom:view",
+                "bom:create", "bom:update", "bom:view",
                 "supplier:view",
-                "quotation:view", "quotation:approve", "quotation:reject",
-                "contract:view"
-            ]
-        },
-        {
-            "code": "finance",
-            "name": "财务",
-            "description": "财务人员，可以查看合同和报价",
-            "permissions": [
-                "bom:view",
-                "supplier:view",
-                "quotation:view",
-                "contract:create", "contract:update", "contract:view"
-            ]
-        },
-        {
-            "code": "user",
-            "name": "普通用户",
-            "description": "普通用户，只能查看",
-            "permissions": [
-                "bom:view",
-                "supplier:view",
+                "material:view",
                 "quotation:view",
                 "contract:view"
             ]
