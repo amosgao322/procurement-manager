@@ -424,15 +424,6 @@ const BomForm: React.FC = () => {
             </Form.Item>
           </Col>
           <Col span={8}>
-            <Form.Item
-              label="BOM名称"
-              name="name"
-              rules={[{ required: true, message: '请输入BOM名称' }]}
-            >
-              <Input placeholder="BOM名称" />
-            </Form.Item>
-          </Col>
-          <Col span={8}>
             <Form.Item label="项目名称" name="product_name">
               <Input placeholder="项目名称" />
             </Form.Item>

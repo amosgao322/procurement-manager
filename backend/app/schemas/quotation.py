@@ -172,6 +172,7 @@ class QuotationComparisonResponse(BaseModel):
     bom_id: int
     bom_code: str
     bom_name: str
+    product_name: Optional[str] = None  # 项目名称
     quotations: List[QuotationBasicInfo]  # 参与对比的报价单基本信息
     item_rows: List[ComparisonItemRow]  # 明细项对比行
     unmatched_quotations: dict  # 未匹配的报价单物料 {quotation_id: [items]}

@@ -122,9 +122,9 @@ const QuotationList: React.FC = () => {
     },
     {
       title: 'BOM',
-      dataIndex: ['bom', 'name'],
       key: 'bom_name',
       width: 150,
+      render: (_, record) => record.bom?.product_name || record.bom?.code || '-',
     },
     {
       title: '供应商',

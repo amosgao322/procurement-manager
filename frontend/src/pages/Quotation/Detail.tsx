@@ -231,7 +231,7 @@ const QuotationDetail: React.FC = () => {
         <Descriptions column={2}>
           <Descriptions.Item label="编码">{quotation.code}</Descriptions.Item>
           <Descriptions.Item label="状态">{getStatusTag(quotation.status)}</Descriptions.Item>
-          <Descriptions.Item label="BOM">{quotation.bom?.name || '-'}</Descriptions.Item>
+          <Descriptions.Item label="BOM">{quotation.bom?.product_name || quotation.bom?.code || '-'}</Descriptions.Item>
           <Descriptions.Item label="供应商">{quotation.supplier?.name || '-'}</Descriptions.Item>
           <Descriptions.Item label="总金额">
             {quotation.total_amount ? `¥${Number(quotation.total_amount).toFixed(2)}` : '-'}

@@ -276,10 +276,13 @@ const Comparison: React.FC = () => {
             filterOption={(input, option) =>
               (option?.label ?? '').toLowerCase().includes(input.toLowerCase())
             }
-            options={boms.map(bom => ({
-              label: `${bom.code} - ${bom.name}`,
-              value: bom.id,
-            }))}
+            options={boms.map(bom => {
+              const displayName = bom.product_name || bom.code;
+              return {
+                label: `${bom.code} - ${displayName}`,
+                value: bom.id,
+              };
+            })}
           />
           <Button
             type="primary"
@@ -339,7 +342,7 @@ const Comparison: React.FC = () => {
             <Card title="基本信息对比" style={{ marginBottom: 16 }}>
               <Descriptions column={2} bordered>
                 <Descriptions.Item label="BOM编码">{comparisonData.bom_code}</Descriptions.Item>
-                <Descriptions.Item label="BOM名称">{comparisonData.bom_name}</Descriptions.Item>
+                <Descriptions.Item label="项目名称">{comparisonData.product_name || '-'}</Descriptions.Item>
               </Descriptions>
               <Divider />
               <Table

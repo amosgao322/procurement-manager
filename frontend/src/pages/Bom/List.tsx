@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react';
 import { Table, Button, Input, Space, message, Modal, Upload, Form, Select, DatePicker, Card, Row, Col } from 'antd';
-import { PlusOutlined, SearchOutlined, UploadOutlined, DownloadOutlined, EyeOutlined, ReloadOutlined } from '@ant-design/icons';
+import { PlusOutlined, SearchOutlined, UploadOutlined, EyeOutlined, ReloadOutlined } from '@ant-design/icons';
 import { useNavigate } from 'react-router-dom';
 import type { ColumnsType } from 'antd/es/table';
 import { bomApi } from '@/services/api';
@@ -178,22 +178,6 @@ const BomList: React.FC = () => {
     return false; // 阻止自动上传
   };
 
-  const handleExport = async (id: number) => {
-    try {
-      const blob = await bomApi.export(id);
-      const url = window.URL.createObjectURL(blob);
-      const a = document.createElement('a');
-      a.href = url;
-      a.download = `BOM_${id}.xlsx`;
-      document.body.appendChild(a);
-      a.click();
-      document.body.removeChild(a);
-      window.URL.revokeObjectURL(url);
-      message.success('导出成功');
-    } catch (error) {
-      message.error('导出失败');
-    }
-  };
 
   const columns: ColumnsType<Bom> = [
     {
@@ -204,17 +188,11 @@ const BomList: React.FC = () => {
       width: 150,
     },
     {
-      title: 'BOM名称',
-      dataIndex: 'name',
-      key: 'name',
-      fixed: 'left',
-      width: 200,
-    },
-    {
       title: '项目名称',
       dataIndex: 'product_name',
       key: 'product_name',
-      width: 150,
+      fixed: 'left',
+      width: 200,
     },
     {
       title: '客户名称',
@@ -254,13 +232,6 @@ const BomList: React.FC = () => {
             onClick={() => navigate(`/boms/${record.id}`)}
           >
             查看
-          </Button>
-          <Button
-            type="link"
-            icon={<DownloadOutlined />}
-            onClick={() => handleExport(record.id!)}
-          >
-            导出
           </Button>
           <Button
             type="link"

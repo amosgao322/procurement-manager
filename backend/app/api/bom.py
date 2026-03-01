@@ -1,11 +1,11 @@
 """
 BOM管理API
 """
-from fastapi import APIRouter, Depends, HTTPException, Query, UploadFile, File
+from fastapi import APIRouter, Depends, HTTPException, Query, UploadFile, File, Body
 from fastapi.responses import StreamingResponse
 from sqlalchemy.orm import Session
 from sqlalchemy import or_, text
-from typing import Optional
+from typing import Optional, List
 from io import BytesIO
 import openpyxl
 from openpyxl.styles import Font, Alignment, PatternFill
@@ -200,7 +200,7 @@ async def get_boms(
         query = query.filter(
             or_(
                 BOM.code.like(f"%{keyword}%"),
-                BOM.name.like(f"%{keyword}%")
+                BOM.product_name.like(f"%{keyword}%")
             )
         )
     
@@ -267,9 +267,12 @@ async def create_bom(
             raise HTTPException(status_code=400, detail="BOM编码已存在")
         
         # 创建BOM
+        # 如果没有提供name，使用项目名称或编码作为默认值
+        bom_name = bom_data.name or bom_data.product_name or bom_data.code
+        
         bom = BOM(
             code=bom_data.code,
-            name=bom_data.name,
+            name=bom_name,
             product_name=bom_data.product_name,
             description=bom_data.description,
             status=bom_data.status,
@@ -333,9 +336,8 @@ async def update_bom(
     if not bom:
         raise HTTPException(status_code=404, detail="BOM不存在")
     
-    # 更新字段
-    if bom_data.name is not None:
-        bom.name = bom_data.name
+    # 更新字段（name字段保留，不作为主要字段更新）
+    # name字段保留原值，不作为主要字段
     if bom_data.product_name is not None:
         bom.product_name = bom_data.product_name
     if bom_data.description is not None:
@@ -411,16 +413,26 @@ async def delete_bom(
     return {"message": "删除成功"}
 
 
-@router.get("/{bom_id}/export")
+@router.post("/{bom_id}/export")
 async def export_bom(
     bom_id: int,
+    item_ids: List[int] = Body(...),
     db: Session = Depends(get_db),
     current_user: User = Depends(get_current_user)
 ):
-    """导出BOM为Excel"""
+    """导出BOM为Excel（支持选择部分物料项）"""
     bom = db.query(BOM).options(joinedload(BOM.items)).filter(BOM.id == bom_id).first()
     if not bom:
         raise HTTPException(status_code=404, detail="BOM不存在")
+    
+    # 验证item_ids不为空
+    if not item_ids or len(item_ids) == 0:
+        raise HTTPException(status_code=400, detail="请至少选择一个物料项")
+    
+    # 过滤出选中的物料项
+    selected_items = [item for item in bom.items if item.id in item_ids]
+    if not selected_items:
+        raise HTTPException(status_code=400, detail="所选物料项不存在或不属于该BOM")
     
     # 创建Excel工作簿
     wb = openpyxl.Workbook()
@@ -435,16 +447,15 @@ async def export_bom(
     # BOM基本信息
     row = 1
     ws.merge_cells(f'A{row}:D{row}')
-    cell = ws.cell(row=row, column=1, value=f"BOM清单 - {bom.name}")
+    # 使用项目名称作为标题，如果没有则使用BOM编码
+    title_text = bom.product_name or f"BOM清单 - {bom.code}"
+    cell = ws.cell(row=row, column=1, value=title_text)
     cell.font = title_font
     cell.alignment = Alignment(horizontal="center", vertical="center")
     
     row += 2
     ws.cell(row=row, column=1, value="BOM编码:").font = Font(bold=True)
     ws.cell(row=row, column=2, value=bom.code)
-    row += 1
-    ws.cell(row=row, column=1, value="BOM名称:").font = Font(bold=True)
-    ws.cell(row=row, column=2, value=bom.name)
     row += 1
     if bom.product_name:
         ws.cell(row=row, column=1, value="产品名称:").font = Font(bold=True)
@@ -495,9 +506,9 @@ async def export_bom(
         cell.font = header_font
         cell.alignment = Alignment(horizontal="center", vertical="center")
     
-    # 明细数据
+    # 明细数据（只导出选中的项）
     row += 1
-    for item in bom.items:
+    for item in selected_items:
         ws.cell(row=row, column=1, value=item.sequence or "")
         ws.cell(row=row, column=2, value=item.material_name)
         ws.cell(row=row, column=3, value=item.specification or "")
@@ -887,15 +898,9 @@ async def import_bom(
             # 使用时间戳生成编码
             bom_code = f"BOM_{datetime.now().strftime('%Y%m%d%H%M%S')}"
     
+    # 如果没有BOM名称，使用项目名称或编码作为默认值（name字段作为备用字段）
     if not bom_name:
-        # 从文件名提取名称
-        filename_base = os.path.splitext(file.filename)[0]
-        # 去除路径和扩展名
-        bom_name = os.path.basename(filename_base)
-        # 清理文件名（去除特殊字符，保留中文、字母、数字）
-        bom_name = re.sub(r'[^\w\u4e00-\u9fa5]+', '_', bom_name)
-        if not bom_name or bom_name == file.filename or len(bom_name) < 2:
-            bom_name = f"BOM清单_{datetime.now().strftime('%Y%m%d')}"
+        bom_name = product_name or bom_code or f"BOM清单_{datetime.now().strftime('%Y%m%d')}"
     
     # 检查BOM编码是否已存在
     existing_bom = db.query(BOM).filter(BOM.code == bom_code).first()
@@ -1709,6 +1714,7 @@ async def compare_quotations(
         bom_id=bom.id,
         bom_code=bom.code,
         bom_name=bom.name,
+        product_name=bom.product_name,
         quotations=quotation_basic_infos,
         item_rows=item_rows,
         unmatched_quotations={},  # 不再返回未匹配物料，因为会直接报错
@@ -1743,7 +1749,9 @@ async def export_quotation_comparison(
     
     # 第一行：BOM基本信息
     ws.merge_cells(f'A{row}:B{row}')
-    ws[f'A{row}'] = f"BOM编码：{comparison_data.bom_code} | BOM名称：{comparison_data.bom_name}"
+    # 使用项目名称，如果没有则使用BOM编码
+    project_name = comparison_data.product_name or comparison_data.bom_code
+    ws[f'A{row}'] = f"BOM编码：{comparison_data.bom_code} | 项目名称：{project_name}"
     ws[f'A{row}'].font = title_font
     row += 1
     

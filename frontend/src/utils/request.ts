@@ -36,13 +36,20 @@ request.interceptors.response.use(
   },
   (error: AxiosError) => {
     if (error.response) {
-      const { status, data } = error.response;
+      const { status, data, config } = error.response;
+      
+      // 登录接口的401错误不在这里处理，让登录页面自己处理
+      const isLoginRequest = config?.url?.includes('/auth/login');
       
       switch (status) {
         case 401:
-          message.error('未授权，请重新登录');
-          removeToken();
-          window.location.href = '/login';
+          if (!isLoginRequest) {
+            // 非登录接口的401错误才跳转
+            message.error('未授权，请重新登录');
+            removeToken();
+            window.location.href = '/login';
+          }
+          // 登录接口的401错误不显示通用提示，让登录页面显示具体错误
           break;
         case 403:
           message.error('没有权限访问');
@@ -54,8 +61,11 @@ request.interceptors.response.use(
           message.error('服务器错误');
           break;
         default:
-          const errorMessage = (data as any)?.detail || (data as any)?.message || '请求失败';
-          message.error(errorMessage);
+          // 登录接口的错误不在这里显示，让登录页面显示
+          if (!isLoginRequest) {
+            const errorMessage = (data as any)?.detail || (data as any)?.message || '请求失败';
+            message.error(errorMessage);
+          }
       }
     } else if (error.request) {
       message.error('网络错误，请检查网络连接');

@@ -440,6 +440,7 @@ export interface QuotationComparisonResponse {
   bom_id: number;
   bom_code: string;
   bom_name: string;
+  product_name?: string;
   quotations: QuotationBasicInfo[];
   item_rows: ComparisonItemRow[];
   unmatched_quotations: Record<number, any[]>;

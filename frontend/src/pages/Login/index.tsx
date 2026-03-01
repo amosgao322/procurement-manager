@@ -22,7 +22,17 @@ const Login: React.FC = () => {
       message.success('登录成功');
       navigate('/');
     } catch (error: any) {
-      message.error(error?.response?.data?.detail || '登录失败，请检查用户名和密码');
+      // 处理错误提示
+      let errorMessage = '用户名或密码错误';
+      
+      if (error?.response?.data) {
+        // 从响应数据中获取错误信息
+        errorMessage = error.response.data.detail || error.response.data.message || errorMessage;
+      } else if (error?.message) {
+        errorMessage = error.message;
+      }
+      
+      message.error(errorMessage);
     } finally {
       setLoading(false);
     }
@@ -32,7 +42,7 @@ const Login: React.FC = () => {
     <div className="login-container">
       <Card className="login-card" bordered={false}>
         <div className="login-header">
-          <img src="/logo.svg" alt="永业环境" className="login-logo" />
+          <img src="/logo-icon.svg" alt="永业环境" className="login-logo" />
           <Title level={3} className="login-title">永业环境采购管理系统</Title>
           <Text type="secondary" className="login-subtitle">湖南永业环境科技有限公司</Text>
         </div>

@@ -69,8 +69,8 @@ export const bomApi = {
       },
     });
   },
-  export: (id: number): Promise<Blob> => {
-    return request.get(`/boms/${id}/export`, {
+  export: (id: number, itemIds: number[]): Promise<Blob> => {
+    return request.post(`/boms/${id}/export`, itemIds, {
       responseType: 'blob',
     });
   },

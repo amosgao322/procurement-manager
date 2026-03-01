@@ -1,19 +1,38 @@
-import { useState, useEffect } from 'react';
-import { useParams, useNavigate } from 'react-router-dom';
-import { 
-  Card, Descriptions, Table, Button, Space, message, Spin, Modal, 
-  Statistic, Row, Col, Tag, Drawer, Progress, Collapse, Empty, Alert 
-} from 'antd';
-import { 
-  ArrowLeftOutlined, DownloadOutlined, HistoryOutlined, 
-  DollarOutlined
-} from '@ant-design/icons';
-import type { ColumnsType } from 'antd/es/table';
 import { bomApi } from '@/services/api';
-import type { 
-  Bom, BomItem, BOMItemPriceHistoryResponse, BOMCostAnalysisResponse, PriceSourceStat
+import type {
+  Bom,
+  BOMCostAnalysisResponse,
+  BomItem, BOMItemPriceHistoryResponse,
+  PriceSourceStat
 } from '@/types';
+import {
+  ArrowLeftOutlined,
+  DollarOutlined,
+  DownloadOutlined, HistoryOutlined
+} from '@ant-design/icons';
+import {
+  Alert,
+  Button,
+  Card,
+  Col,
+  Collapse,
+  Descriptions,
+  Drawer,
+  Empty,
+  message,
+  Modal,
+  Progress,
+  Row,
+  Space,
+  Spin,
+  Statistic,
+  Table,
+  Tag
+} from 'antd';
+import type { ColumnsType } from 'antd/es/table';
 import dayjs from 'dayjs';
+import { useEffect, useState } from 'react';
+import { useNavigate, useParams } from 'react-router-dom';
 
 const BomDetail: React.FC = () => {
   const { id } = useParams<{ id: string }>();
@@ -26,6 +45,7 @@ const BomDetail: React.FC = () => {
   const [costAnalysisVisible, setCostAnalysisVisible] = useState(false);
   const [costAnalysisLoading, setCostAnalysisLoading] = useState(false);
   const [costAnalysisData, setCostAnalysisData] = useState<BOMCostAnalysisResponse | null>(null);
+  const [selectedRowKeys, setSelectedRowKeys] = useState<React.Key[]>([]);
 
   useEffect(() => {
     if (id && id !== 'new') {
@@ -50,8 +70,16 @@ const BomDetail: React.FC = () => {
 
   const handleExport = async () => {
     if (!id || id === 'new') return;
+
+    // 验证是否选择了物料项
+    if (!selectedRowKeys || selectedRowKeys.length === 0) {
+      message.warning('请至少选择一个物料项才能导出');
+      return;
+    }
+
     try {
-      const blob = await bomApi.export(Number(id));
+      const itemIds = selectedRowKeys.map(key => Number(key));
+      const blob = await bomApi.export(Number(id), itemIds);
       const url = window.URL.createObjectURL(blob);
       const a = document.createElement('a');
       a.href = url;
@@ -59,8 +87,9 @@ const BomDetail: React.FC = () => {
       a.click();
       window.URL.revokeObjectURL(url);
       message.success('导出成功');
-    } catch (error) {
-      message.error('导出失败');
+    } catch (error: any) {
+      const errorMessage = error?.response?.data?.detail || '导出失败';
+      message.error(errorMessage);
     }
   };
 
@@ -266,19 +295,28 @@ const BomDetail: React.FC = () => {
 
   return (
     <div>
-      <Space style={{ marginBottom: 16 }}>
+      <Space style={{ marginBottom: 16 }} wrap>
         <Button icon={<ArrowLeftOutlined />} onClick={() => navigate('/boms')}>
           返回
         </Button>
         <Button onClick={() => navigate(`/boms/${bom.id}/edit`)}>
           编辑
         </Button>
-        <Button icon={<DownloadOutlined />} onClick={handleExport}>
+        <Button
+          icon={<DownloadOutlined />}
+          onClick={handleExport}
+          disabled={selectedRowKeys.length === 0}
+        >
           导出Excel
         </Button>
-        <Button 
-          type="primary" 
-          icon={<DollarOutlined />} 
+        {selectedRowKeys.length > 0 && (
+          <span style={{ color: '#1890ff', marginLeft: 8 }}>
+            已选择 {selectedRowKeys.length} 项
+          </span>
+        )}
+        <Button
+          type="primary"
+          icon={<DollarOutlined />}
           onClick={handleCalculateCost}
         >
           生成成本价
@@ -288,7 +326,6 @@ const BomDetail: React.FC = () => {
       <Card title="BOM基本信息" style={{ marginBottom: 16 }}>
         <Descriptions column={2}>
           <Descriptions.Item label="编码">{bom.code}</Descriptions.Item>
-          <Descriptions.Item label="名称">{bom.name}</Descriptions.Item>
           <Descriptions.Item label="项目名称">{bom.product_name || '-'}</Descriptions.Item>
           <Descriptions.Item label="状态">{bom.status || '-'}</Descriptions.Item>
           <Descriptions.Item label="客户名称">{bom.customer_name || '-'}</Descriptions.Item>
@@ -317,6 +354,12 @@ const BomDetail: React.FC = () => {
           rowKey="id"
           pagination={false}
           scroll={{ x: 'max-content' }}
+          rowSelection={{
+            selectedRowKeys,
+            onChange: (selectedKeys) => {
+              setSelectedRowKeys(selectedKeys);
+            },
+          }}
         />
       </Card>
 
@@ -477,7 +520,7 @@ const BomDetail: React.FC = () => {
                       />
                     </>
                   )}
-                  
+
                   {/* 其他状态价格记录（仅参考） */}
                   {priceHistoryData.price_history.filter((item: any) => item.price_status === 'pending' || item.price_status === 'abnormal').length > 0 && (
                     <>
@@ -640,26 +683,26 @@ const BomDetail: React.FC = () => {
                     {costAnalysisData.price_source_stats.map((stat: PriceSourceStat) => {
                       if (stat.source_type === 'unknown') return null;
                       return (
-                      <Col span={12} key={stat.source_type}>
-                        <div style={{ marginBottom: 8 }}>
-                          <span style={{ fontWeight: 'bold' }}>
-                            {stat.source_type === 'manual' ? '手动录入' : 
-                             stat.source_type === 'quotation' ? '报价单录入' : stat.source_type}
-                          </span>
-                          <span style={{ float: 'right', color: '#999' }}>
-                            {Number(stat.count).toFixed(1).replace(/\.0$/, '')}项 (¥{Number(stat.total_amount).toFixed(2)})
-                          </span>
-                        </div>
-                        <Progress 
-                          percent={Number(Number(stat.percentage).toFixed(1))} 
-                          status="active" 
-                          strokeColor={
-                            stat.source_type === 'manual' ? '#1890ff' : 
-                            stat.source_type === 'quotation' ? '#722ed1' : '#d9d9d9'
-                          }
-                        />
-                      </Col>
-                    );
+                        <Col span={12} key={stat.source_type}>
+                          <div style={{ marginBottom: 8 }}>
+                            <span style={{ fontWeight: 'bold' }}>
+                              {stat.source_type === 'manual' ? '手动录入' :
+                                stat.source_type === 'quotation' ? '报价单录入' : stat.source_type}
+                            </span>
+                            <span style={{ float: 'right', color: '#999' }}>
+                              {Number(stat.count).toFixed(1).replace(/\.0$/, '')}项 (¥{Number(stat.total_amount).toFixed(2)})
+                            </span>
+                          </div>
+                          <Progress
+                            percent={Number(Number(stat.percentage).toFixed(1))}
+                            status="active"
+                            strokeColor={
+                              stat.source_type === 'manual' ? '#1890ff' :
+                                stat.source_type === 'quotation' ? '#722ed1' : '#d9d9d9'
+                            }
+                          />
+                        </Col>
+                      );
                     })}
                   </Row>
                 </Card>
@@ -668,8 +711,8 @@ const BomDetail: React.FC = () => {
               {/* 未匹配物料汇总 */}
               {costAnalysisData.unmatched_items && costAnalysisData.unmatched_items.length > 0 && (
                 <Collapse style={{ marginBottom: 24 }} defaultActiveKey={['1']}>
-                  <Collapse.Panel 
-                    header={<span style={{ color: '#faad14' }}>未匹配物料清单 ({costAnalysisData.unmatched_items.length})</span>} 
+                  <Collapse.Panel
+                    header={<span style={{ color: '#faad14' }}>未匹配物料清单 ({costAnalysisData.unmatched_items.length})</span>}
                     key="1"
                   >
                     <Table
@@ -717,7 +760,7 @@ const BomDetail: React.FC = () => {
                     key: 'quantity',
                     width: 100,
                     align: 'right',
-                    render: (text: number, record) => 
+                    render: (text: number, record) =>
                       `${Number(text).toFixed(2)} ${record.unit || ''}`,
                   },
                   {
@@ -726,7 +769,7 @@ const BomDetail: React.FC = () => {
                     key: 'cost_price',
                     width: 120,
                     align: 'right',
-                    render: (text: number) => 
+                    render: (text: number) =>
                       text ? `¥${Number(text).toFixed(2)}` : '-',
                   },
                   {
@@ -735,7 +778,7 @@ const BomDetail: React.FC = () => {
                     key: 'cost_total',
                     width: 120,
                     align: 'right',
-                    render: (text: number) => 
+                    render: (text: number) =>
                       text ? `¥${Number(text).toFixed(2)}` : '-',
                   },
                   {

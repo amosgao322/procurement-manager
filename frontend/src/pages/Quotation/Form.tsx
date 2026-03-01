@@ -414,11 +414,14 @@ const QuotationForm: React.FC = () => {
                 }
                 onChange={handleBomChange}
               >
-                {boms.map(bom => (
-                  <Select.Option key={bom.id} value={bom.id} label={bom.name}>
-                    {bom.name} ({bom.code})
-                  </Select.Option>
-                ))}
+                {boms.map(bom => {
+                  const displayName = bom.product_name || bom.code;
+                  return (
+                    <Select.Option key={bom.id} value={bom.id} label={displayName}>
+                      {displayName} ({bom.code})
+                    </Select.Option>
+                  );
+                })}
               </Select>
             </Form.Item>
           </Col>
